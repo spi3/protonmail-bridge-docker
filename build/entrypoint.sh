@@ -14,9 +14,12 @@ if [[ $1 == init ]]; then
     # which is useful in a k8s environment.
     # || true to make sure this would not fail in case there is no running instance.
     pkill protonmail-bridge || true
+    pkill proton-bridge || true
+    pkill bridge || true
 
-    # Login
-    /protonmail/proton-bridge --cli $@
+    # Login. Use the app binary directly so the launcher does not switch to
+    # a persisted self-updated binary with dependencies outside this image.
+    /protonmail/bridge --cli "$@"
 
 else
 
@@ -26,10 +29,11 @@ else
     socat TCP-LISTEN:25,fork TCP:127.0.0.1:1025 &
     socat TCP-LISTEN:143,fork TCP:127.0.0.1:1143 &
 
-    # Start protonmail
+    # Start protonmail. Use the app binary directly so the launcher does not
+    # switch to a persisted self-updated binary with dependencies outside this image.
     # Fake a terminal, so it does not quit because of EOF...
     rm -f faketty
     mkfifo faketty
-    cat faketty | /protonmail/proton-bridge --cli $@
+    cat faketty | /protonmail/bridge --cli "$@"
 
 fi
