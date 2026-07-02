@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import sys
 import urllib.request
@@ -6,6 +7,14 @@ import urllib.request
 
 def git(*args):
     return subprocess.run(["git", *args], check=False).returncode
+
+
+def set_output(name, value):
+    output_path = os.environ.get("GITHUB_OUTPUT")
+
+    if output_path:
+        with open(output_path, "a") as f:
+            f.write(f"{name}={value}\n")
 
 
 def latest_release():
@@ -34,6 +43,7 @@ if not deb_assets:
     sys.exit(1)
 
 print(f"Latest release is: {version}")
+set_output("version", version)
 
 with open("VERSION", "w") as f:
     f.write(version)
@@ -47,11 +57,14 @@ git("add", "-A")
 
 if git("diff", "--cached", "--quiet") == 0:
     print("Version didn't change")
+    set_output("changed", "false")
     sys.exit(0)
 
 if git("commit", "-m", f"chore: bump Proton Bridge to {version}") != 0:
     print("Git commit failed!")
     sys.exit(1)
+
+set_output("changed", "true")
 
 is_pull_request = sys.argv[1] == "true"
 

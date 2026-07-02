@@ -101,9 +101,9 @@ Do not expose Bridge to an untrusted network without firewall controls. The IMAP
 
 ## Automatic Updates
 
-The scheduled update workflow checks the latest upstream Proton Bridge release, updates `VERSION` and `deb/PACKAGE`, and commits the change with a conventional commit message. When that commit lands on `master`, the image workflows publish the matching GHCR tags.
+The scheduled update workflow checks the latest upstream Proton Bridge release, updates `VERSION` and `deb/PACKAGE`, and commits the change with a conventional commit message.
 
-The scheduled workflow requires a `PERSONAL_TOKEN` secret with repository contents write access. This is intentional: pushes made with the default `GITHUB_TOKEN` do not reliably trigger the downstream image publishing workflows.
+The workflow uses the built-in `GITHUB_TOKEN` with repository contents write access. Because pushes made with `GITHUB_TOKEN` do not trigger normal `push` workflows, the update workflow sends a `repository_dispatch` event after a version bump. The image workflows listen for that event and publish the matching GHCR tags.
 
 ## Build
 

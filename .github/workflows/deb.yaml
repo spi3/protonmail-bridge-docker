@@ -11,6 +11,9 @@ on:
       - .github/workflows/deb.yaml
       - deb/*
       - VERSION
+  repository_dispatch:
+    types:
+      - proton_bridge_updated
   workflow_dispatch:
 
 permissions:
@@ -68,7 +71,7 @@ jobs:
 
       - name: Login to GHCR
         uses: docker/login-action@v3
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: github.event_name == 'repository_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -76,7 +79,7 @@ jobs:
 
       - name: Publish GHCR image
         uses: docker/build-push-action@v6
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: github.event_name == 'repository_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         with:
           context: ./deb
           file: ./deb/Dockerfile
