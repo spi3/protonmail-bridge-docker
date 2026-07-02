@@ -6,11 +6,7 @@ on:
       - .github/workflows/deb.yaml
       - deb/*
       - VERSION
-  pull_request:
-    paths:
-      - .github/workflows/deb.yaml
-      - deb/*
-      - VERSION
+  pull_request: {}
   workflow_dispatch:
 
 permissions:
@@ -52,16 +48,27 @@ jobs:
           build-args: |
             version=${{ env.version }}
 
+      - name: Smoke test Bridge binary
+        run: docker run --rm --entrypoint /usr/lib/protonmail/bridge/bridge protonmail-bridge:scan --version
+
+      - name: Check Bridge shared libraries
+        run: |
+          docker run --rm --entrypoint sh protonmail-bridge:scan -ec '
+            ldd /usr/lib/protonmail/bridge/bridge | tee /tmp/bridge-ldd.txt
+            ! grep -q "not found" /tmp/bridge-ldd.txt
+          '
+
       - name: Run Trivy vulnerability scan
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: protonmail-bridge:scan
           format: 'sarif'
-          exit-code: 0
-          severity: 'CRITICAL,HIGH'
+          exit-code: 1
+          severity: 'CRITICAL'
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy scan SARIF report
+        if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'

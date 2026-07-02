@@ -28,7 +28,8 @@
       ],
       "automerge": true,
       "automergeType": "pr",
-      "platformAutomerge": true
+      "platformAutomerge": false,
+      "minimumReleaseAge": "3 days"
     }
   ]
 }

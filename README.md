@@ -101,7 +101,7 @@ Do not expose Bridge to an untrusted network without firewall controls. The IMAP
 
 ## Automatic Updates
 
-Renovate tracks upstream Proton Bridge releases with a regex custom manager for the repository `VERSION` file. Proton Bridge dependency PRs are configured for automerge after checks pass. This requires the Renovate GitHub App or a self-hosted Renovate runner to be enabled for the repository.
+Renovate tracks upstream Proton Bridge releases with a regex custom manager for the repository `VERSION` file. Proton Bridge dependency PRs are configured for automerge after checks pass and a three-day release stability window. This requires the Renovate GitHub App or a self-hosted Renovate runner to be enabled for the repository.
 
 When a Renovate update merges to `master`, the normal `push` image workflows publish the matching GHCR tags. No custom update-check workflow or personal access token is required.
 

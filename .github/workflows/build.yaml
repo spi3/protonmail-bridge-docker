@@ -6,11 +6,7 @@ on:
       - .github/workflows/build.yaml
       - build/*
       - VERSION
-  pull_request:
-    paths:
-      - .github/workflows/build.yaml
-      - build/*
-      - VERSION
+  pull_request: {}
   workflow_dispatch:
 
 permissions:
@@ -20,15 +16,28 @@ permissions:
 
 env:
   GHCR_REPO: ghcr.io/${{ github.repository }}
-  PLATFORMS: linux/amd64,linux/arm64/v8,linux/arm/v7,linux/riscv64
 
 jobs:
   test:
+    name: test (${{ matrix.platform }})
     runs-on: ubuntu-latest
     if: github.ref != 'refs/heads/master'
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64/v8
+          - linux/arm/v7
+          - linux/riscv64
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Prepare
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
 
       - name: Set version
         id: version
@@ -41,42 +50,52 @@ jobs:
           images: |
             ${{ env.GHCR_REPO }}
 
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        if: github.event_name != 'pull_request'
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
           driver-opts: network=host
 
-      - name: Build and push by digest
+      - name: Build image
         id: build
         uses: docker/build-push-action@v6
         with:
+          platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           context: ./build
           file: ./build/Dockerfile
-          tags: "${{ env.GHCR_REPO }}:dev-${{ github.sha }}"
-          push: ${{ github.event_name != 'pull_request' }}
-          load: ${{ github.event_name == 'pull_request' }}
+          tags: "protonmail-bridge:source-${{ env.PLATFORM_PAIR }}"
+          push: false
+          load: ${{ matrix.platform == 'linux/amd64' }}
           build-args: |
             version=${{ env.version }}
 
+      - name: Smoke test Bridge binary
+        if: matrix.platform == 'linux/amd64'
+        run: docker run --rm --entrypoint /protonmail/bridge protonmail-bridge:source-${{ env.PLATFORM_PAIR }} --version
+
+      - name: Check Bridge shared libraries
+        if: matrix.platform == 'linux/amd64'
+        run: |
+          docker run --rm --entrypoint sh protonmail-bridge:source-${{ env.PLATFORM_PAIR }} -ec '
+            ldd /protonmail/bridge | tee /tmp/bridge-ldd.txt
+            ! grep -q "not found" /tmp/bridge-ldd.txt
+          '
+
       - name: Run Trivy vulnerability scan
+        if: matrix.platform == 'linux/amd64'
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: "${{ env.GHCR_REPO }}:dev-${{ github.sha }}"
+          image-ref: protonmail-bridge:source-${{ env.PLATFORM_PAIR }}
           format: 'sarif'
-          exit-code: 0
-          severity: 'CRITICAL,HIGH'
+          exit-code: 1
+          severity: 'CRITICAL'
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy scan SARIF report
+        if: always() && matrix.platform == 'linux/amd64'
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
@@ -209,10 +228,11 @@ jobs:
         with:
           image-ref: "${{ env.GHCR_REPO }}:${{ env.version }}-build"
           format: 'sarif'
-          exit-code: 0
-          severity: 'CRITICAL,HIGH'
+          exit-code: 1
+          severity: 'CRITICAL'
           output: 'trivy-results.sarif'
       - name: Upload Trivy scan SARIF report
+        if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
