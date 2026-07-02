@@ -2,7 +2,6 @@
 
 ![deb workflow](https://github.com/spi3/protonmail-bridge-docker/actions/workflows/deb.yaml/badge.svg)
 ![source workflow](https://github.com/spi3/protonmail-bridge-docker/actions/workflows/build.yaml/badge.svg)
-![update workflow](https://github.com/spi3/protonmail-bridge-docker/actions/workflows/update-check.yaml/badge.svg)
 
 This is an unofficial Docker container for [Proton Mail Bridge](https://proton.me/mail/bridge). This fork is based on [shenxn/protonmail-bridge-docker](https://github.com/shenxn/protonmail-bridge-docker), with changes focused on predictable container startup and GitHub Container Registry publishing.
 
@@ -19,6 +18,7 @@ ghcr.io/spi3/protonmail-bridge-docker
 - The image includes the FIDO2 libraries required by current Bridge versions.
 - GitHub Actions publish only to GHCR, not Docker Hub.
 - Tags are derived from the repository `VERSION` file, which tracks the upstream Proton Bridge release.
+- Renovate opens and automerges Proton Bridge version updates after checks pass.
 - The upstream Gitee mirror workflow has been removed.
 
 ## Tags
@@ -101,16 +101,16 @@ Do not expose Bridge to an untrusted network without firewall controls. The IMAP
 
 ## Automatic Updates
 
-The scheduled update workflow checks the latest upstream Proton Bridge release, updates `VERSION` and `deb/PACKAGE`, and commits the change with a conventional commit message.
+Renovate tracks upstream Proton Bridge releases with a regex custom manager for the repository `VERSION` file. Proton Bridge dependency PRs are configured for automerge after checks pass. This requires the Renovate GitHub App or a self-hosted Renovate runner to be enabled for the repository.
 
-The workflow uses the built-in `GITHUB_TOKEN` with repository contents write access. Because pushes made with `GITHUB_TOKEN` do not trigger normal `push` workflows, the update workflow sends a `repository_dispatch` event after a version bump. The image workflows listen for that event and publish the matching GHCR tags.
+When a Renovate update merges to `master`, the normal `push` image workflows publish the matching GHCR tags. No custom update-check workflow or personal access token is required.
 
 ## Build
 
 To build the `deb` image locally:
 
 ```sh
-docker build -f deb/Dockerfile deb
+docker build --build-arg version="$(cat VERSION)" -f deb/Dockerfile deb
 ```
 
 To build the source image locally:

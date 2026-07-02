@@ -11,9 +11,6 @@ on:
       - .github/workflows/build.yaml
       - build/*
       - VERSION
-  repository_dispatch:
-    types:
-      - proton_bridge_updated
   workflow_dispatch:
 
 permissions:
@@ -86,7 +83,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    if: github.event_name == 'repository_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     strategy:
       fail-fast: false
       matrix:

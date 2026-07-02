@@ -3,11 +3,13 @@
 
 FROM debian:sid-slim AS build
 
-COPY install.sh PACKAGE /
-RUN apt-get update && apt-get install -y wget binutils
+ARG version
+
+COPY install.sh /
+RUN apt-get update && apt-get install -y wget binutils jq ca-certificates
 
 # Repack deb (removes unnecessary dependencies and produces /protonmail.deb)
-RUN bash /install.sh
+RUN bash /install.sh "$version"
 
 FROM debian:sid-slim
 LABEL maintainer="Simon Felding <sife@adm.ku.dk>"
@@ -18,7 +20,7 @@ EXPOSE 143/tcp
 WORKDIR /protonmail
 
 # Copy bash scripts
-COPY gpgparams entrypoint.sh PACKAGE /protonmail/
+COPY gpgparams entrypoint.sh /protonmail/
 COPY --from=build /protonmail.deb /tmp/protonmail.deb
 
 RUN apt-get update \
