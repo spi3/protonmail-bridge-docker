@@ -69,18 +69,16 @@ jobs:
           file: ./build/Dockerfile
           tags: "protonmail-bridge:source-${{ env.PLATFORM_PAIR }}"
           push: false
-          load: ${{ matrix.platform == 'linux/amd64' }}
+          load: true
           build-args: |
             version=${{ env.version }}
 
       - name: Smoke test Bridge binary
-        if: matrix.platform == 'linux/amd64'
-        run: docker run --rm --entrypoint /protonmail/bridge protonmail-bridge:source-${{ env.PLATFORM_PAIR }} --version
+        run: docker run --rm --platform ${{ matrix.platform }} --entrypoint /protonmail/bridge protonmail-bridge:source-${{ env.PLATFORM_PAIR }} --version
 
       - name: Check Bridge shared libraries
-        if: matrix.platform == 'linux/amd64'
         run: |
-          docker run --rm --entrypoint sh protonmail-bridge:source-${{ env.PLATFORM_PAIR }} -ec '
+          docker run --rm --platform ${{ matrix.platform }} --entrypoint sh protonmail-bridge:source-${{ env.PLATFORM_PAIR }} -ec '
             ldd /protonmail/bridge | tee /tmp/bridge-ldd.txt
             ! grep -q "not found" /tmp/bridge-ldd.txt
           '
