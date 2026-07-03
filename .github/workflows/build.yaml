@@ -84,14 +84,26 @@ jobs:
             ! grep -q "not found" /tmp/bridge-ldd.txt
           '
 
-      - name: Run Trivy vulnerability scan
+      - name: Run blocking Trivy vulnerability scan
         if: matrix.platform == 'linux/amd64'
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: protonmail-bridge:source-${{ env.PLATFORM_PAIR }}
-          format: 'sarif'
+          scanners: 'vuln'
+          format: 'table'
           exit-code: 1
           severity: 'CRITICAL'
+
+      - name: Generate Trivy SARIF report
+        if: always() && matrix.platform == 'linux/amd64'
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: protonmail-bridge:source-${{ env.PLATFORM_PAIR }}
+          scanners: 'vuln'
+          format: 'sarif'
+          exit-code: 0
+          severity: 'CRITICAL,HIGH'
+          limit-severities-for-sarif: true
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy scan SARIF report
@@ -223,13 +235,25 @@ jobs:
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf '${{ env.GHCR_REPO }}@sha256:%s ' *)
 
-      - name: Run Trivy vulnerability scan
+      - name: Run blocking Trivy vulnerability scan
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: "${{ env.GHCR_REPO }}:${{ env.version }}-build"
-          format: 'sarif'
+          scanners: 'vuln'
+          format: 'table'
           exit-code: 1
           severity: 'CRITICAL'
+
+      - name: Generate Trivy SARIF report
+        if: always()
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: "${{ env.GHCR_REPO }}:${{ env.version }}-build"
+          scanners: 'vuln'
+          format: 'sarif'
+          exit-code: 0
+          severity: 'CRITICAL,HIGH'
+          limit-severities-for-sarif: true
           output: 'trivy-results.sarif'
       - name: Upload Trivy scan SARIF report
         if: always()
