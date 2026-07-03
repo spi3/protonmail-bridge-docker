@@ -29,8 +29,9 @@ if [[ $1 == init ]]; then
     gpg --generate-key --batch /protonmail/gpgparams
     pass init pass-key
 
-    # Login
-    protonmail-bridge --cli
+    # Login. Use the app binary directly so the launcher does not switch to
+    # a persisted self-updated binary with dependencies outside this image.
+    /usr/lib/protonmail/bridge/bridge --cli
 
 else
 
@@ -40,10 +41,11 @@ else
     socat TCP-LISTEN:25,fork TCP:127.0.0.1:1025 &
     socat TCP-LISTEN:143,fork TCP:127.0.0.1:1143 &
 
-    # Start protonmail
+    # Start protonmail. Use the app binary directly so the launcher does not
+    # switch to a persisted self-updated binary with dependencies outside this image.
     # Fake a terminal, so it does not quit because of EOF...
     rm -f faketty
     mkfifo faketty
-    cat faketty | protonmail-bridge --cli
+    cat faketty | /usr/lib/protonmail/bridge/bridge --cli
 
 fi
