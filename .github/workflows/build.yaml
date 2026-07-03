@@ -84,7 +84,6 @@ jobs:
           '
 
       - name: Run blocking Trivy vulnerability scan
-        if: matrix.platform == 'linux/amd64'
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: protonmail-bridge:source-${{ env.PLATFORM_PAIR }}
