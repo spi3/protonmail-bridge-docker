@@ -84,7 +84,6 @@ jobs:
           '
 
       - name: Run blocking Trivy vulnerability scan
-        if: matrix.platform == 'linux/amd64'
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: protonmail-bridge:source-${{ env.PLATFORM_PAIR }}
@@ -221,8 +220,8 @@ jobs:
           images: |
             ${{ env.GHCR_REPO }}
           tags: |
-            type=raw,enable=true,value=${{ env.version }}-build
-            type=raw,enable=true,suffix=,value=build
+            type=raw,enable=true,value=${{ env.version }}
+            type=raw,enable=true,value=latest
 
       - name: Create manifest list and push
         working-directory: ${{ runner.temp }}/digests
@@ -233,7 +232,7 @@ jobs:
       - name: Run blocking Trivy vulnerability scan
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: "${{ env.GHCR_REPO }}:${{ env.version }}-build"
+          image-ref: "${{ env.GHCR_REPO }}:${{ env.version }}"
           scanners: 'vuln'
           format: 'table'
           exit-code: 1
@@ -243,7 +242,7 @@ jobs:
         if: always()
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: "${{ env.GHCR_REPO }}:${{ env.version }}-build"
+          image-ref: "${{ env.GHCR_REPO }}:${{ env.version }}"
           scanners: 'vuln'
           format: 'sarif'
           exit-code: 0
@@ -258,4 +257,4 @@ jobs:
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ${{ env.GHCR_REPO }}:${{ steps.meta.outputs.version }}
+          docker buildx imagetools inspect ${{ env.GHCR_REPO }}:${{ env.version }}

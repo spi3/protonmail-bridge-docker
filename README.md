@@ -1,7 +1,6 @@
 # Proton Mail Bridge Docker Container
 
-![deb workflow](https://github.com/spi3/protonmail-bridge-docker/actions/workflows/deb.yaml/badge.svg)
-![source workflow](https://github.com/spi3/protonmail-bridge-docker/actions/workflows/build.yaml/badge.svg)
+![build workflow](https://github.com/spi3/protonmail-bridge-docker/actions/workflows/build.yaml/badge.svg)
 
 This is an unofficial Docker container for [Proton Mail Bridge](https://proton.me/mail/bridge). This fork is based on [shenxn/protonmail-bridge-docker](https://github.com/shenxn/protonmail-bridge-docker), with changes focused on predictable container startup and GitHub Container Registry publishing.
 
@@ -16,24 +15,21 @@ ghcr.io/spi3/protonmail-bridge-docker
 - The entrypoints run the Bridge app binary directly instead of the `proton-bridge` launcher.
 - This avoids switching to a persisted self-updated binary under the mounted `/root` data directory at startup.
 - The image includes the FIDO2 libraries required by current Bridge versions.
+- The default image is built from source and published as a multiarch image for `amd64`, `arm64`, and `riscv64`.
 - GitHub Actions publish only to GHCR, not Docker Hub.
 - Tags are derived from the repository `VERSION` file, which tracks the upstream Proton Bridge release.
 - Renovate opens and automerges Proton Bridge version updates after checks pass.
 - The upstream Gitee mirror workflow has been removed.
+- The previous deb-repack image path has been removed.
 
 ## Tags
 
-There are two image variants.
-
-- `deb`: repacks the official `.deb` release. This only supports `amd64`.
-- `build`: builds Bridge from source. This supports `amd64`, `arm64`, and `riscv64`.
+The image is built from source and published as a multiarch image for `amd64`, `arm64`, and `riscv64`.
 
 tag | description
 -- | --
-`latest` | latest `deb` image
-`<version>` | versioned `deb` image matching `VERSION`
-`build` | latest source-built image
-`<version>-build` | versioned source-built image matching `VERSION`
+`latest` | latest source-built image
+`<version>` | versioned source-built image matching `VERSION`
 
 Use a versioned tag for deployments where repeatability matters.
 
@@ -103,17 +99,11 @@ Do not expose Bridge to an untrusted network without firewall controls. The IMAP
 
 Renovate tracks upstream Proton Bridge releases with a regex custom manager for the repository `VERSION` file. Proton Bridge dependency PRs are configured for automerge after checks pass and a three-day release stability window. This requires the Renovate GitHub App or a self-hosted Renovate runner to be enabled for the repository.
 
-When a Renovate update merges to `master`, the normal `push` image workflows publish the matching GHCR tags. No custom update-check workflow or personal access token is required.
+When a Renovate update merges to `master`, the normal `push` image workflow publishes the matching GHCR tags. No custom update-check workflow or personal access token is required.
 
 ## Build
 
-To build the `deb` image locally:
-
-```sh
-docker build --build-arg version="$(cat VERSION)" -f deb/Dockerfile deb
-```
-
-To build the source image locally:
+To build the image locally:
 
 ```sh
 docker build --build-arg version="$(cat VERSION)" -f build/Dockerfile build
