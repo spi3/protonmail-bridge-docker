@@ -2,6 +2,8 @@ name: pack from deb
 
 on:
   push:
+    branches:
+      - master
     paths:
       - .github/workflows/deb.yaml
       - deb/*

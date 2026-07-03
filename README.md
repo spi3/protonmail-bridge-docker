@@ -26,7 +26,7 @@ ghcr.io/spi3/protonmail-bridge-docker
 There are two image variants.
 
 - `deb`: repacks the official `.deb` release. This only supports `amd64`.
-- `build`: builds Bridge from source. This supports `amd64`, `arm64`, `arm/v7`, and `riscv64`.
+- `build`: builds Bridge from source. This supports `amd64`, `arm64`, and `riscv64`.
 
 tag | description
 -- | --

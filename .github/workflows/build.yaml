@@ -2,6 +2,8 @@ name: build from source
 
 on:
   push:
+    branches:
+      - master
     paths:
       - .github/workflows/build.yaml
       - build/*
@@ -28,7 +30,6 @@ jobs:
         platform:
           - linux/amd64
           - linux/arm64/v8
-          - linux/arm/v7
           - linux/riscv64
     steps:
       - name: Checkout
@@ -121,7 +122,6 @@ jobs:
         platform:
           - linux/amd64
           - linux/arm64/v8
-          - linux/arm/v7
           - linux/riscv64
     steps:
       - name: Checkout
